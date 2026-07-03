@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>皮皮虾无水印下载 · 在线解析</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; }
+  .glow { box-shadow: 0 0 40px rgba(251, 146, 60, 0.15); }
+  .glow:hover { box-shadow: 0 0 60px rgba(251, 146, 60, 0.3); }
+  pre { white-space: pre-wrap; word-break: break-all; }
+  @keyframes pulse-dot { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+  .live-dot { animation: pulse-dot 2s infinite; }
+</style>
+</head>
+<body class="text-slate-100 font-sans">
+
+<div class="container mx-auto px-4 py-8 max-w-3xl">
+  <!-- Header -->
+  <header class="text-center mb-10">
+    <div class="inline-flex items-center gap-2 bg-slate-800/50 border border-slate-700 rounded-full px-3 py-1 text-xs text-slate-400 mb-4">
+      <span class="w-2 h-2 bg-orange-500 rounded-full live-dot"></span>
+      <span id="stat-text">服务运行中 · 加载中...</span>
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-3">
+      视频<span class="text-orange-500">下载</span>工具
+    </h1>
+    <p class="text-slate-400 text-sm md:text-base">
+      粘贴分享链接 → 一键下载视频 · 皮皮虾无水印 · YouTube 高清
+    </p>
+  </header>
+
+  <!-- Main Card -->
+  <div class="bg-slate-800/60 backdrop-blur border border-slate-700 rounded-2xl p-6 md:p-8 glow">
+    <!-- Tab 切换 -->
+    <div class="flex border-b border-slate-700 mb-5 -mx-2">
+      <button id="tab-pipix" data-platform="pipix"
+        class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-orange-500 text-orange-400 transition">
+        🦐 皮皮虾
+      </button>
+      <button id="tab-youtube" data-platform="youtube"
+        class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition">
+        ▶️ YouTube
+      </button>
+    </div>
+
+    <label class="block text-sm text-slate-300 mb-2 font-medium" id="input-label">皮皮虾分享链接</label>
+    <div class="flex flex-col md:flex-row gap-2">
+      <input
+        id="url-input"
+        type="text"
+        placeholder="https://h5.pipix.com/s/xxxxx"
+        class="flex-1 bg-slate-900/70 border border-slate-600 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-orange-500 transition"
+      />
+      <button
+        id="parse-btn"
+        onclick="parseVideo()"
+        class="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-medium px-6 py-3 rounded-lg transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <span id="btn-text">解析</span>
+        <svg id="btn-spinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Quota bar -->
+    <div class="mt-4 flex items-center justify-between text-xs text-slate-400">
+      <span>今日剩余免费次数: <span id="quota-num" class="text-orange-400 font-semibold">--</span> / <span id="quota-total">--</span></span>
+      <span class="text-slate-500">付费版即将上线 · 解除限制</span>
+    </div>
+    <div class="mt-1 h-1 bg-slate-700 rounded-full overflow-hidden">
+      <div id="quota-bar" class="h-full bg-gradient-to-r from-orange-500 to-orange-400 transition-all" style="width:0%"></div>
+    </div>
+
+    <!-- Error -->
+    <div id="error-box" class="mt-4 hidden bg-red-900/30 border border-red-700/50 text-red-200 px-4 py-3 rounded-lg text-sm"></div>
+
+    <!-- Result -->
+    <div id="result-box" class="mt-6 hidden">
+      <div class="border-t border-slate-700 pt-6">
+        <div class="flex items-start gap-3 mb-4">
+          <img id="result-thumb" class="hidden w-24 h-16 rounded-lg object-cover bg-slate-900 shrink-0" alt="" />
+          <div id="result-icon-fallback" class="w-12 h-12 rounded-lg bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-2xl shrink-0">
+            🎬
+          </div>
+          <div class="flex-1 min-w-0">
+            <div id="result-title" class="font-medium text-base truncate"></div>
+            <div class="text-xs text-slate-400 mt-1 flex flex-wrap gap-2 items-center">
+              <span id="result-id-label">ID:</span>
+              <span id="result-id" class="text-slate-300 font-mono"></span>
+              <span id="result-channel-wrap" class="hidden">·</span>
+              <span id="result-channel" class="text-slate-300"></span>
+              <span id="result-duration-wrap" class="hidden">·</span>
+              <span id="result-duration" class="text-slate-300"></span>
+              <span>·</span>
+              <span id="result-quality-badge" class="px-2 py-0.5 rounded-full text-xs"></span>
+            </div>
+          </div>
+        </div>
+
+        <a
+          id="download-link"
+          href="#"
+          class="block w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-center font-semibold py-3 rounded-lg transition"
+        >
+          ⬇️ 下载视频
+        </a>
+
+        <!-- YouTube 画质选择 (仅 YouTube 显示) -->
+        <div id="quality-picker" class="mt-3 hidden">
+          <label class="block text-xs text-slate-400 mb-1">选择画质</label>
+          <div id="quality-buttons" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <details class="mt-3">
+          <summary class="text-xs text-slate-500 cursor-pointer hover:text-slate-400">查看视频直链</summary>
+          <pre id="result-url" class="mt-2 text-xs text-slate-400 bg-slate-900/50 p-3 rounded break-all"></pre>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <!-- How to -->
+  <div class="mt-8 grid md:grid-cols-3 gap-4 text-center text-sm">
+    <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4">
+      <div class="text-2xl mb-2">1️⃣</div>
+      <div class="text-slate-300">打开皮皮虾 / YouTube App</div>
+      <div class="text-slate-500 text-xs mt-1">找到要下载的视频</div>
+    </div>
+    <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4">
+      <div class="text-2xl mb-2">2️⃣</div>
+      <div class="text-slate-300">点击"分享" → "复制链接"</div>
+      <div class="text-slate-500 text-xs mt-1">皮皮虾: h5.pipix.com/... / YouTube: youtu.be/...</div>
+    </div>
+    <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-4">
+      <div class="text-2xl mb-2">3️⃣</div>
+      <div class="text-slate-300">粘贴并解析</div>
+      <div class="text-slate-500 text-xs mt-1">一键下载，无水印 / 高清</div>
+    </div>
+  </div>
+
+  <footer class="mt-10 text-center text-xs text-slate-600">
+    <p>仅供学习交流使用 · 请勿用于商业用途 · 视频版权归原作者所有</p>
+  </footer>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const input = $("url-input");
+  const btn = $("parse-btn");
+  const btnText = $("btn-text");
+  const btnSpinner = $("btn-spinner");
+
+  // Enter 提交
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") parseVideo();
+  });
+
+  // Tab 切换
+  let currentPlatform = "pipix";
+  const tabConfig = {
+    pipix: { placeholder: "https://h5.pipix.com/s/xxxxx 或 /ppx/item/12345", label: "皮皮虾分享链接" },
+    youtube: { placeholder: "https://www.youtube.com/watch?v=xxxxx 或 youtu.be/xxxxx", label: "YouTube 视频链接" },
+  };
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.onclick = () => {
+      currentPlatform = btn.dataset.platform;
+      document.querySelectorAll(".tab-btn").forEach(b => {
+        b.className = b.className.replace(/border-(orange-500|transparent)/, "border-transparent").replace(/text-(orange-400|slate-400)/, "text-slate-400");
+      });
+      btn.className = btn.className.replace(/border-transparent/, "border-orange-500").replace(/text-slate-400/, "text-orange-400");
+      $("input-label").textContent = tabConfig[currentPlatform].label;
+      $("url-input").placeholder = tabConfig[currentPlatform].placeholder;
+      $("url-input").focus();
+    };
+  });
+
+  // 初始加载配额 + 统计
+  async function loadQuota() {
+    try {
+      const [quota, stats] = await Promise.all([
+        fetch("/api/quota").then(r => r.json()),
+        fetch("/api/stats").then(r => r.json()),
+      ]);
+      $("quota-num").textContent = quota.remaining;
+      $("quota-total").textContent = quota.daily_limit;
+      // 进度条表达"已用": 0 = 没下过, 100% = 用完
+      const used = quota.daily_limit - quota.remaining;
+      const pct = (used / quota.daily_limit) * 100;
+      $("quota-bar").style.width = pct + "%";
+      $("stat-text").textContent =
+        `已为 ${stats.unique_videos} 个视频提供下载 · 今日 ${stats.today} 次`;
+    } catch (e) {
+      $("stat-text").textContent = "服务运行中";
+    }
+  }
+  loadQuota();
+
+  function showError(msg) {
+    const box = $("error-box");
+    box.textContent = msg;
+    box.classList.remove("hidden");
+    $("result-box").classList.add("hidden");
+  }
+  function hideError() {
+    $("error-box").classList.add("hidden");
+  }
+
+  function setLoading(loading) {
+    btn.disabled = loading;
+    btnText.textContent = loading ? "解析中..." : "解析";
+    btnSpinner.classList.toggle("hidden", !loading);
+  }
+
+  async function parseVideo() {
+    const url = input.value.trim();
+    if (!url) {
+      showError("请先粘贴皮皮虾分享链接");
+      input.focus();
+      return;
+    }
+    hideError();
+    setLoading(true);
+    try {
+      const r = await fetch("/api/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        showError(data.detail || "解析失败");
+        return;
+      }
+      // 显示结果
+      $("result-title").textContent = data.title;
+      $("result-id").textContent = data.item_id;
+
+      // 缩略图 (YouTube 有, 皮皮虾无)
+      const thumb = $("result-thumb");
+      const fallback = $("result-icon-fallback");
+      if (data.thumbnail) {
+        thumb.src = data.thumbnail;
+        thumb.classList.remove("hidden");
+        fallback.classList.add("hidden");
+      } else {
+        thumb.classList.add("hidden");
+        fallback.classList.remove("hidden");
+      }
+
+      // 频道 (YouTube)
+      const chWrap = $("result-channel-wrap");
+      const ch = $("result-channel");
+      if (data.channel) {
+        chWrap.classList.remove("hidden");
+        ch.textContent = data.channel;
+      } else {
+        chWrap.classList.add("hidden");
+      }
+
+      // 时长
+      const durWrap = $("result-duration-wrap");
+      const dur = $("result-duration");
+      if (data.duration) {
+        const s = data.duration;
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        durWrap.classList.remove("hidden");
+        dur.textContent = `${m}:${sec.toString().padStart(2, "0")}`;
+      } else {
+        durWrap.classList.add("hidden");
+      }
+
+      $("result-url").textContent = data.download_url;
+      const dl = $("download-link");
+      dl.href = data.download_url;
+
+      // 画质选择 (仅 YouTube)
+      const picker = $("quality-picker");
+      const buttons = $("quality-buttons");
+      buttons.innerHTML = "";
+      if (data.platform === "youtube" && data.available_heights && data.available_heights.length) {
+        picker.classList.remove("hidden");
+        // 默认选 720p, 没有就选最接近的
+        const heights = data.available_heights;
+        const defaultH = heights.includes(720) ? 720
+                       : heights.includes(1080) ? 1080
+                       : heights[0];
+        const baseUrl = data.download_url;
+        heights.forEach(h => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "px-3 py-1.5 text-xs rounded-md border transition "
+            + (h === defaultH
+              ? "bg-orange-500 border-orange-500 text-white"
+              : "bg-slate-800 border-slate-600 text-slate-300 hover:border-orange-500 hover:text-orange-400");
+          btn.textContent = `${h}p`;
+          btn.onclick = () => {
+            // 切换 active 样式
+            buttons.querySelectorAll("button").forEach(b => {
+              b.className = "px-3 py-1.5 text-xs rounded-md border transition bg-slate-800 border-slate-600 text-slate-300 hover:border-orange-500 hover:text-orange-400";
+            });
+            btn.className = "px-3 py-1.5 text-xs rounded-md border transition bg-orange-500 border-orange-500 text-white";
+            // 更新下载链接
+            const sep = baseUrl.includes("?") ? "&" : "?";
+            dl.href = `${baseUrl}${sep}height=${h}`;
+            $("result-url").textContent = dl.href;
+          };
+          buttons.appendChild(btn);
+        });
+        // 初始默认 url 加 height
+        const sep = baseUrl.includes("?") ? "&" : "?";
+        dl.href = `${baseUrl}${sep}height=${defaultH}`;
+        $("result-url").textContent = dl.href;
+      } else {
+        picker.classList.add("hidden");
+      }
+      const badge = $("result-quality-badge");
+      badge.textContent = data.quality;
+      const isClean = data.quality.includes("无水印");
+      badge.className = "px-2 py-0.5 rounded-full text-xs " +
+        (isClean
+          ? "bg-green-500/20 text-green-300 border border-green-500/30"
+          : "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30");
+      $("result-box").classList.remove("hidden");
+      // 刷新配额
+      loadQuota();
+    } catch (e) {
+      showError("网络错误: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+</script>
+</body>
+</html>
