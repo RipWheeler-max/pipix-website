@@ -1,0 +1,35 @@
+# 依赖
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 虚拟环境
+venv/
+.venv/
+env/
+
+# 数据 (不上传)
+data/
+data/*.json
+logs/
+logs/*.log
+
+# 数据库 (其他位置兜底)
+*.db
+*.sqlite
+*.sqlite3
+
+# 临时 YouTube 缓存 (服务端下载到 /tmp)
+yt_*.mp4
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
